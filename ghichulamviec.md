@@ -216,8 +216,10 @@ nó để quyết định có đẩy traffic vào instance này không. Đang t�
 Đã trả lời cả 10 câu phản ánh bằng tiếng Việt, dựa trên code đã viết + quan sát thật:
 - **Câu 2 & 9** dùng số liệu chạy thật: gọi `/ask` 3 lần cùng một user, thu được
   dòng log JSON thật và thấy `history_length` tăng 0 → 2 → 4.
-- **Câu 3 (kích thước image)** và **Câu 10 (lỗi deploy)** cần Docker/cloud thật nên
-  tôi ghi rõ phần giải thích + đánh dấu chỗ bạn điền số đo / trải nghiệm thật của bạn.
+- **Câu 3 (kích thước image)** dùng số đo thật từ `docker images` (multi-stage
+  271MB vs 1-stage 1.7GB); **Câu 10 (lỗi deploy)** ghi lỗi THẬT gặp khi deploy
+  Railway (`REDIS_URL` trỏ sai `${{day12-redis.DATABASE_URL}}` → `/ready` 503;
+  thiếu `AGENT_API_KEY` → `/ask` 500), cùng cách tìm ra và sửa.
 - Đã điền họ tên + MSSV vào đầu file.
 
 > Đã sửa dòng hướng dẫn ở đầu `exercises.md` (bỏ chuỗi mẫu `> *Câu trả lời...*`
@@ -270,8 +272,8 @@ không còn bị cắt trần 60%).
 
 > Test duy nhất còn đỏ là `test_badge_bao_passing`: nó tải badge live từ GitHub và
 > đòi badge báo `passing`. Cái này cần repo **public đã push** và workflow **đã chạy
-> thật** — không làm được offline. Sau khi push, thay `<GITHUB_USERNAME>` trong
-> README bằng username của bạn là badge sẽ sống.
+> thật** — không làm được offline. README đã điền username `nguyenhihi123q`; badge
+> sẽ sống khi repo đổi đúng tên `...-CloudServicesAndDeployment` và để chế độ public.
 
 ---
 

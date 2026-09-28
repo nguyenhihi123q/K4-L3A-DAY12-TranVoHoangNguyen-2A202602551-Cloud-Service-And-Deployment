@@ -91,5 +91,5 @@
 - [x] Job `build`: `docker build` trên runner
 - [x] Job `deploy`: `needs: [test, build]` + `if:` chỉ chạy trên push nhánh main
 - [x] Secret token trong GitHub Secrets; ghim version action (`@v4`, `@v5`); smoke test sau deploy
-- [x] Thêm badge CI vào README  ← **còn `<GITHUB_USERNAME>` cần bạn thay sau khi push**
+- [x] Thêm badge CI vào README  ← **đã điền username `nguyenhihi123q`; badge sẽ sống khi repo đổi đúng tên `...-CloudServicesAndDeployment` + để public**
 - [ ] `pytest tests/test_bonus_cicd.py -v` xanh  ← **12/13 pass; test badge cần repo public đã push (cần bạn)**

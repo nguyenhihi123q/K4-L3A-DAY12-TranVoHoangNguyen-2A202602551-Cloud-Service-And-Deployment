@@ -249,25 +249,26 @@ Ghi lại **một** lỗi bạn gặp khi deploy lên cloud (build fail, health 
 timeout, sai REDIS_URL, app không đọc `$PORT`...): thông báo lỗi là gì, bạn
 tìm ra nguyên nhân bằng cách nào, và sửa ra sao?
 
-> **Ghi chú trung thực:** câu này gắn với CP5 (deploy thật lên cloud). Tôi chưa
-> deploy được từ máy làm bài (chưa có tài khoản cloud + repo public để push).
-> Dưới đây là lỗi phổ biến nhất và cách xử lý; khi bạn deploy thật, hãy thay bằng
-> lỗi cụ thể bạn gặp.
+Lỗi thật tôi gặp khi deploy lên Railway: **`REDIS_URL` trỏ sai tên biến tham
+chiếu → `/ready` trả 503.**
 
-Lỗi thường gặp nhất: **health check timeout — deploy báo "service unhealthy"**.
+- **Bối cảnh & thông báo lỗi:** app deploy xong, `/health` trả 200 (service
+  Online), nhưng khâu nối Redis suýt sai. Redis nằm ở service riêng
+  (`day12-redis`); service agent phải khai `REDIS_URL` bằng Variable Reference.
+  Lần đầu tôi trỏ tới `${{day12-redis.DATABASE_URL}}`. Redis của Railway **không**
+  expose biến tên `DATABASE_URL` (nó expose `REDIS_URL`, `REDISHOST`, `REDISPORT`,
+  `REDISPASSWORD`...). Reference tới biến không tồn tại → `REDIS_URL` của agent
+  rỗng → `store.ping()` thất bại → `/ready` trả **503 `{"status":"not ready","redis":false}`**.
+- **Tìm nguyên nhân:** tôi mở tab Variables của service `day12-redis` để xem đúng
+  tên biến nó cung cấp (thấy là `REDIS_URL`, không có `DATABASE_URL`), và dùng
+  `/ready` làm phép thử — 503 gần như luôn nghĩa là `REDIS_URL` sai hoặc chưa nối Redis.
+- **Cách sửa:** đổi reference thành `${{day12-redis.REDIS_URL}}`. Railway tự
+  redeploy. Sau đó gọi `GET https://day12-agent-production-a9ec.up.railway.app/ready`
+  → **200 `{"status":"ready","redis":true}`**.
 
-- **Thông báo lỗi:** trên dashboard Railway/Render, deploy chạy xong nhưng health
-  check quay mãi rồi báo `Healthcheck failed` / `service unhealthy`, container bị
-  kill và restart liên tục.
-- **Tìm nguyên nhân:** mở log runtime trên dashboard, thấy uvicorn khởi động ở
-  `http://0.0.0.0:8000` trong khi platform lại gán cổng động qua biến `$PORT`
-  (ví dụ cổng 8080) và gọi health check vào đúng cổng đó → không ai lắng nghe ở
-  cổng platform mong đợi.
-- **Cách sửa:** cho app đọc `$PORT` do platform cấp thay vì hardcode 8000. Trong
-  `Dockerfile` tôi đã dùng `CMD ["sh","-c","uvicorn app.main:app --host 0.0.0.0
-  --port ${PORT:-8000}"]` và trong `config.py` có trường `port`. Sau khi bind
-  đúng `$PORT`, health check `/health` trả 200 và deploy chuyển sang trạng thái
-  healthy.
-
-(Các lỗi hay gặp khác để đối chiếu: quên set `AGENT_API_KEY` → app crash lúc
-khởi động; `REDIS_URL` trỏ sai/không tạo Redis add-on → `/ready` trả 503.)
+Một lỗi cấu hình thứ hai cùng kiểu: ban đầu service agent **thiếu hẳn biến
+`AGENT_API_KEY`**. App vẫn Online (vì `/health` không đọc key) nhưng `/ask` sẽ nổ
+500 thay vì 401 do `get_settings()` ném `ValidationError`. Thêm `AGENT_API_KEY`
+trên dashboard là hết. Bài học: trên cloud không có `docker-compose` lo sẵn —
+từng biến (`$PORT` do platform gán, `AGENT_API_KEY`, `REDIS_URL` qua reference)
+phải tự khai đúng, và `/ready` + log runtime là hai chỗ soi nhanh nhất.
