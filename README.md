@@ -1,5 +1,8 @@
 # K4 — Level 3A, Ngày 12: Hạ Tầng Cloud & Deployment (240 phút)
 
+<!-- BONUS CI: badge trỏ tới repo GitHub. Repo phải đổi tên thành ...-CloudServicesAndDeployment (viết liền) để URL này khớp -->
+![CI](https://github.com/nguyenhihi123q/K4-L3A-DAY12-TranVoHoangNguyen-2A202602551-CloudServicesAndDeployment/actions/workflows/ci.yml/badge.svg)
+
 Đưa một AI agent từ `localhost:8000` lên một địa chỉ công khai mà người khác
 gọi được, có bảo mật, có giới hạn chi phí, và không sập khi bạn deploy bản mới.
 
