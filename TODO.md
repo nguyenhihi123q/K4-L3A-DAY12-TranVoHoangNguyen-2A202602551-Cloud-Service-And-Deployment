@@ -67,14 +67,14 @@
 - [x] `app/lifecycle.py`: bắt SIGTERM/SIGINT, bật cờ `shutting_down`, **gọi lại handler cũ của uvicorn**
 - [x] `pytest tests/test_cp4.py -v` xanh → commit  ← **19/19 pass**
 
-## CP5 — Cloud Deployment (15đ)  ✅ 9/15 (phương án dự phòng LOCAL_FALLBACK)
+## CP5 — Cloud Deployment (15đ)  ✅ 15/15 (DEPLOY THẬT trên Railway)
 
-- [ ] Deploy lên Railway hoặc Render + set env trên platform  ← **cần tài khoản cloud (chưa làm → dùng dự phòng)**
-- [x] Kiểm tra `/health` (200), `/ready` (200 = đã nối Redis), `/ask` không key (401)  ← **verify thật trên localhost:8000**
-- [x] Điền `DEPLOYMENT.md`: họ tên + MSSV + repo + ghi rõ dùng LOCAL_FALLBACK + output thật (đã bỏ hết placeholder `(điền)`)
-- [x] Chụp màn hình vào `screenshots/`  ← **`local-fallback-docker.png` (docker compose ps + 3 lệnh curl)**
-- [x] `pytest tests/test_cp5.py -v` xanh → commit  ← **8 passed, 5 skipped (dự phòng)**
-- [x] (Phương án dự phòng: `LOCAL_FALLBACK=true` + `docker compose up -d` — trần 9/15đ)  ← **đã chạy, đạt 9/15**
+- [x] Deploy lên Railway + set env trên platform  ← **đã deploy: `https://day12-agent-production-a9ec.up.railway.app`**
+- [x] Kiểm tra `/health` (200), `/ready` (200 = đã nối Redis), `/ask` không key (401)  ← **verify thật trên URL cloud**
+- [x] Điền `DEPLOYMENT.md`: họ tên + MSSV + repo + Public URL thật + output thật (không placeholder, không lộ key)
+- [x] Chụp màn hình vào `screenshots/`  ← **`railway-dashboard.png` (agent Online) + `local-fallback-docker.png`**
+- [x] `LOCAL_FALLBACK=false` trong `.env` → test tự gọi thẳng URL cloud
+- [x] `pytest tests/test_cp5.py -v` xanh → **8 passed, 5 skipped → CP5 15/15**
 
 ## Wrap-up
 

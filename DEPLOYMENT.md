@@ -16,15 +16,13 @@
 
 ## Service
 
-> **Phương án đang dùng: LOCAL_FALLBACK (chạy cục bộ bằng Docker Compose).**
-> Chưa deploy lên cloud thật (chưa có tài khoản Railway + repo public để push).
-> Nền tảng dự kiến khi deploy thật: **Railway**. Vì dùng phương án dự phòng nên
-> CP5 tối đa 60% điểm (9/15) — xem `grade.py`.
+> **Đã deploy thật lên cloud (Railway).** Service có địa chỉ công khai HTTPS,
+> nối được Redis thật (Redis service riêng trên Railway), có bảo mật API key.
 
 | Mục | Nội dung |
 |-----|----------|
-| Địa chỉ service | http://localhost:8000 (Docker Compose, `LOCAL_FALLBACK=true`) |
-| Platform | Chạy cục bộ bằng Docker Compose; nền tảng dự kiến deploy thật: Railway |
+| Địa chỉ service (Public URL) | https://day12-agent-production-a9ec.up.railway.app |
+| Platform | Railway (build từ `Dockerfile`, healthcheck `/health`, Redis service riêng) |
 | Ngày kiểm tra | 2026-09-28 |
 
 ## Biến Môi Trường Đã Set Trên Cloud
@@ -33,9 +31,9 @@ Ghi tên biến và **nguồn giá trị**, không ghi giá trị:
 
 | Biến | Đã set | Ghi chú |
 |------|--------|---------|
-| `PORT` | ✅ | platform tự gán |
-| `AGENT_API_KEY` | ✅ | đặt trong dashboard, không nằm trong repo |
-| `REDIS_URL` | ✅ | `redis://redis:6379/0` — service `redis` trong Docker Compose (khi deploy thật: Redis add-on / Upstash) |
+| `PORT` | ✅ | Railway tự gán, app đọc `$PORT` |
+| `AGENT_API_KEY` | ✅ | đặt trong dashboard Railway, KHÔNG nằm trong repo |
+| `REDIS_URL` | ✅ | Variable Reference `${{day12-redis.REDIS_URL}}` — trỏ tới Redis service riêng trên Railway |
 | `RATE_LIMIT_PER_MINUTE` | ✅ | 10 |
 | `MONTHLY_BUDGET_USD` | ✅ | 10.0 |
 | `LOG_LEVEL` | ✅ | INFO |
@@ -75,21 +73,16 @@ done; echo
 
 ## Kết Quả Chạy Thật
 
-Output thật khi chạy stack bằng Docker Compose ở máy (LOCAL_FALLBACK):
+Output thật khi gọi service **trên cloud (Railway)** qua Internet, ngày 2026-09-28:
 
 ```
-$ docker compose ps
-SERVICE   STATUS                   PORTS
-agent     Up (healthy)             0.0.0.0:8000->8000/tcp
-redis     Up (healthy)             0.0.0.0:6379->6379/tcp
-
-$ curl http://localhost:8000/health
+$ curl https://day12-agent-production-a9ec.up.railway.app/health
 HTTP 200  ->  {"status":"ok","service":"day12-agent","version":"1.0.0"}
 
-$ curl http://localhost:8000/ready
-HTTP 200  ->  {"status":"ready","redis":true}          # đã nối được Redis
+$ curl https://day12-agent-production-a9ec.up.railway.app/ready
+HTTP 200  ->  {"status":"ready","redis":true}          # đã nối được Redis trên Railway
 
-$ curl -X POST http://localhost:8000/ask -d '{"question":"Hello"}'   # không kèm API key
+$ curl -X POST https://day12-agent-production-a9ec.up.railway.app/ask -d '{"question":"Hello"}'   # không kèm API key
 HTTP 401  ->  {"detail":"invalid or missing API key"}
 ```
 
@@ -97,27 +90,19 @@ HTTP 401  ->  {"detail":"invalid or missing API key"}
 
 Ảnh trong thư mục `screenshots/`:
 
-- `screenshots/local-fallback-docker.png` — kết quả `docker compose ps` (2 container
-  `agent` + `redis` đều healthy) kèm output gọi `/health` (200), `/ready` (200) và
-  `/ask` không key (401) — chụp từ output thật của stack đang chạy.
+- `screenshots/railway-dashboard.png` — dashboard Railway: service `day12-agent`
+  ở trạng thái **Online** và service Redis riêng `day12-redis` với biến `REDIS_URL`
+  (agent nối tới Redis qua Variable Reference).
+- `screenshots/local-fallback-docker.png` — bằng chứng bổ sung: chạy stack bằng
+  `docker compose` ở máy (`docker compose ps` + gọi `/health` 200, `/ready` 200,
+  `/ask` không key 401) — dùng để đối chiếu với bản cloud.
 
 ---
 
-## Nếu Dùng Phương Án Dự Phòng
+## Phương Án Dự Phòng (không dùng — chỉ để tham khảo)
 
-Không đăng ký được tài khoản cloud? Vẫn nộp được bài, nhưng CP5 tối đa 60% điểm:
-
-1. Đặt `LOCAL_FALLBACK=true` trong `.env`
-2. Chạy `docker compose up -d` rồi kiểm tra `docker compose ps`
-3. Chụp màn hình vào `screenshots/`
-4. Chạy `pytest tests/test_cp5.py -v` — bộ test sẽ tự chuyển sang kiểm tra
-   `http://localhost:8000`
-5. Ghi rõ lý do không deploy được vào phần dưới đây:
-
-```
-Lý do dùng phương án dự phòng: chưa có tài khoản cloud (Railway/Render) và
-repo public trên GitHub để push tại thời điểm làm bài. App đã sẵn sàng cho
-cloud (đọc $PORT, bind 0.0.0.0, /health không chạm Redis, có railway.toml +
-render.yaml), nên khi có tài khoản chỉ cần push repo + set env là deploy được.
-Trong lúc đó, chạy cục bộ bằng Docker Compose để kiểm chứng service hoạt động.
-```
+Bài này **đã deploy thật lên Railway** nên không dùng phương án dự phòng. Nếu ai
+đó không đăng ký được tài khoản cloud thì vẫn nộp được (CP5 tối đa 60% điểm) bằng
+cách: đặt `LOCAL_FALLBACK=true` trong `.env`, chạy `docker compose up -d`, chụp
+màn hình vào `screenshots/`, rồi `pytest tests/test_cp5.py -v` (bộ test tự chuyển
+sang kiểm tra `http://localhost:8000`).

@@ -226,29 +226,34 @@ nó để quyết định có đẩy traffic vào instance này không. Đang t�
 
 ---
 
-## CP5 — Cloud Deployment  ✅ 9/15 (phương án dự phòng LOCAL_FALLBACK)
+## CP5 — Cloud Deployment  ✅ 15/15 (DEPLOY THẬT trên Railway)
 
-**Đã làm bằng phương án dự phòng** (Docker Desktop đã có, nhưng chưa deploy cloud thật
-vì cần tài khoản Railway + repo public):
+**Đã deploy thật lên Railway** (không dùng phương án dự phòng nữa):
 
-1. Đặt `LOCAL_FALLBACK=true` trong `.env`.
-2. `docker compose up -d --build` → 2 container `agent` + `redis` đều **healthy**.
-3. Kiểm chứng endpoint thật:
+1. Kết nối GitHub ↔ Railway, tạo project; Railway build service `day12-agent` từ
+   `Dockerfile` (theo `railway.toml`: builder=dockerfile, healthcheck `/health`).
+2. Thêm một **Redis service riêng** (`day12-redis`) trong cùng project.
+3. Set biến môi trường trên dashboard service `day12-agent`:
+   - `AGENT_API_KEY` = khóa bí mật (đặt trực tiếp trên dashboard, KHÔNG vào repo).
+   - `REDIS_URL` = **Variable Reference** `${{day12-redis.REDIS_URL}}` → agent nối
+     tới Redis service thật (không phải `fake://`, không phải localhost).
+   - `LOG_LEVEL`, `RATE_LIMIT_PER_MINUTE`, `MONTHLY_BUDGET_USD`; `PORT` do Railway tự gán.
+4. **Generate Domain** → Public URL: `https://day12-agent-production-a9ec.up.railway.app`.
+5. Kiểm chứng thật qua Internet (`curl`):
    - `GET /health` → **200** `{"status":"ok",...}`
-   - `GET /ready` → **200** `{"status":"ready","redis":true}` (nối được Redis thật trong compose)
+   - `GET /ready` → **200** `{"status":"ready","redis":true}` (nối được Redis trên cloud)
    - `POST /ask` không key → **401**
-4. Chụp bằng chứng: `screenshots/local-fallback-docker.png` (render từ output thật của
-   `docker compose ps` + 3 lệnh curl).
-5. Điền `DEPLOYMENT.md`: bỏ hết placeholder `(điền...)`, ghi rõ đang dùng LOCAL_FALLBACK,
-   nền tảng dự kiến khi deploy thật = Railway, dán output thật, nêu lý do dùng dự phòng.
+6. Điền Public URL vào `DEPLOYMENT.md`, đặt `LOCAL_FALLBACK=false` trong `.env`
+   → bộ test tự chuyển sang gọi thẳng URL cloud.
 
-**Kết quả:** `LOCAL_FALLBACK=true pytest tests/test_cp5.py -v` → **8 passed, 5 skipped**
-(4 test `TestDeploymentDoc` + 4 test `TestLocalFallback` pass; 5 test `TestPublicDeployment`
-skip vì không có URL cloud). `grade.py` cắt trần 60% → **9/15**.
+**Kết quả:** `pytest tests/test_cp5.py -v` → **8 passed, 5 skipped**
+(4 test `TestDeploymentDoc` + 4 test `TestPublicDeployment` core pass; test `/ask`
+có-key và 4 test `TestLocalFallback` bỏ qua). `grade.py` → **CP5 15/15** (deploy thật,
+không còn bị cắt trần 60%).
 
-**Muốn full 15/15:** deploy thật lên Railway/Render (cần tài khoản + repo public), điền
-Public URL `https://...` vào `DEPLOYMENT.md`, gỡ `LOCAL_FALLBACK` → bộ test tự chuyển sang
-gọi URL cloud (`TestPublicDeployment`).
+> Vì sao cần Redis service riêng + Variable Reference? App stateless, state ở Redis.
+> Trên cloud không có `docker-compose` nên phải dùng Redis service của platform và
+> trỏ `REDIS_URL` của agent tới nó bằng reference — sai reference thì `/ready` trả 503.
 
 ---
 
@@ -278,15 +283,15 @@ gọi URL cloud (`TestPublicDeployment`).
 | CP2 | 16/16 (build thật) | 15/15 |
 | CP3 | 22/22 | 20/20 |
 | CP4 | 19/19 | 20/20 |
-| CP5 | 8/8 (dự phòng, 5 skip) | 9/15 |
+| CP5 | 8/8 (deploy thật, 5 skip) | 15/15 |
 | Exercises | 10/10 | 15/15 |
-| **Bắt buộc** | | **94/100** |
+| **Bắt buộc** | | **100/100** |
 | Bonus CI/CD | 12/13 | +9.2/10 |
 | **TỔNG (trần 100)** | | **100/100** |
 
-**Đã đạt trần 100/100** (mục tiêu ≥75 vượt xa). CP5 đang là 9/15 bằng phương án dự phòng;
-nếu deploy cloud thật thì CP5 lên 15/15 nhưng tổng vẫn 100 (đã chạm trần). Điểm bonus bị
-cắt 3.2đ vì đã chạm trần 100 — không ảnh hưởng kết quả.
+**Đã đạt trần 100/100** với CP5 **deploy thật 15/15** trên Railway (không còn dùng
+phương án dự phòng). Phần bắt buộc đã full 100/100 kể cả khi bỏ bonus. Điểm bonus bị
+cắt vì tổng đã chạm trần 100 — không ảnh hưởng kết quả.
 
 > ⚠️ **Nhắc lại rủi ro trừ điểm:** tên thư mục hiện là `...-Cloud-Service-And-Deployment`
 > nhưng chuẩn yêu cầu `...-CloudServicesAndDeployment` (viết liền). Khi tạo repo GitHub,
