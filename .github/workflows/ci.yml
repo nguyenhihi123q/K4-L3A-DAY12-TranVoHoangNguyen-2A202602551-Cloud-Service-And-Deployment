@@ -61,6 +61,10 @@ jobs:
           # Ví dụ: railway up --service day12-agent
       - name: Smoke test sau deploy
         env:
+          # Dùng secret nếu có; nếu chưa cấu hình thì dùng Public URL đã deploy
+          # (URL công khai, không phải bí mật) để smoke test service thật.
           DEPLOY_URL: ${{ secrets.DEPLOY_URL }}
         run: |
-          curl -fsS "$DEPLOY_URL/health"
+          URL="${DEPLOY_URL:-https://day12-agent-production-a9ec.up.railway.app}"
+          echo "Smoke test: $URL/health"
+          curl -fsS "$URL/health"
